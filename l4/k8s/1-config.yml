@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: notes-config
+  labels:
+    part-of: notes
+data:
+  POSTGRES_HOST: "notes-db"
+  POSTGRES_DB: "notes"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: notes-secret
+  labels:
+    part-of: notes
+type: Opaque
+stringData:
+  POSTGRES_USER: "notes"
+  POSTGRES_PASSWORD: "k8s_notes_password"
