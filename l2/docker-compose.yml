@@ -1,0 +1,45 @@
+name: notes
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: notes-db
+    env_file: .env
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      retries: 10
+    networks:
+      - notes-net
+
+  init-db:
+    image: postgres:17-alpine
+    container_name: notes-init-db
+    env_file: .env
+    entrypoint: ["sh", "-c", "PGPASSWORD=$$POSTGRES_PASSWORD psql -h $$POSTGRES_HOST -U $$POSTGRES_USER -d $$POSTGRES_DB -c 'CREATE TABLE IF NOT EXISTS notes (id SERIAL PRIMARY KEY, text TEXT NOT NULL)'"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - notes-net
+
+  app:
+    build: .
+    image: notes-app:2.0
+    container_name: notes-app
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    networks:
+      - notes-net
+
+volumes:
+  pg-data:
+
+networks:
+  notes-net:
